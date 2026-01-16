@@ -1,0 +1,11 @@
+yt-dlp
+google-genai
+requests
+gspread
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+fastapi
+uvicorn[standard]
+python-multipart
+python-dotenv

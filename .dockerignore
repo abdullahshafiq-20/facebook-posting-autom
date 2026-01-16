@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+facebook_automation.log
+
+# Temp files
+temp_downloads/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Environment
+.env
+.env.local
+
+# Documentation
+README.md
+
+# Test files
+test_*.py
+*_test.py
+
+# CSV (not needed in production - using Google Sheets)
+*.csv
+
+# Windows
+Thumbs.db
+desktop.ini
