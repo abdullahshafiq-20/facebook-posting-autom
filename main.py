@@ -46,7 +46,7 @@ API_PASSWORD = os.getenv("API_PASSWORD", "admin123")
 PAGE_ID = os.getenv("FACEBOOK_PAGE_ID")
 ACCESS_TOKEN = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
+SPREADSHEET_NAME = os.getenv("SPREADSHEET_NAME")
 # Validate required environment variables
 def validate_env_vars():
     """Validate that all required environment variables are set"""
@@ -54,7 +54,8 @@ def validate_env_vars():
         'FACEBOOK_PAGE_ID': PAGE_ID,
         'FACEBOOK_PAGE_ACCESS_TOKEN': ACCESS_TOKEN,
         'GEMINI_API_KEY': GEMINI_API_KEY,
-        'GOOGLE_SERVICE_ACCOUNT': os.getenv('GOOGLE_SERVICE_ACCOUNT')
+        'GOOGLE_SERVICE_ACCOUNT': os.getenv('GOOGLE_SERVICE_ACCOUNT'),
+        'SPREADSHEET_NAME': SPREADSHEET_NAME
     }
     
     missing = [name for name, value in required_vars.items() if not value]
@@ -95,10 +96,7 @@ class ProcessResult(BaseModel):
 
 
 class FacebookPoster:
-    def __init__(self, config_path='config.json'):
-        """Initialize with configuration"""
-        with open(config_path, 'r') as f:
-            self.config = json.load(f)
+    def __init__(self):
         
         # Validate environment variables are loaded
         if not all([PAGE_ID, ACCESS_TOKEN, GEMINI_API_KEY]):
@@ -362,7 +360,7 @@ Only provide the new caption with hashtags, no extra explanation."""
             client = gspread.authorize(creds)
             
             # Open the spreadsheet
-            spreadsheet_name = self.config.get('google_sheets', {}).get('spreadsheet_name', 'Mindrots')
+            spreadsheet_name = SPREADSHEET_NAME
             sheet = client.open(spreadsheet_name).sheet1
             
             logger.info(f"✓ Connected to Google Sheet: {spreadsheet_name}")
@@ -750,13 +748,6 @@ def main():
     print("=" * 60)
     print("Facebook Video Posting Automation")
     print("=" * 60)
-    
-    # Check if config exists
-    if not os.path.exists('config.json'):
-        print("\nERROR: config.json not found!")
-        print("Please create config.json with your credentials.")
-        print("See config.example.json for the required format.")
-        return
     
     logger.info("Starting Facebook Video Posting Automation")
     
