@@ -789,14 +789,6 @@ def main():
 
 
 if __name__ == "__main__":
-    import sys
-    
-    # Check if running as API server or direct execution
-    if len(sys.argv) > 1 and sys.argv[1] == "api":
-        # Run as FastAPI server
-        import uvicorn
-        port = int(os.getenv("PORT", 8000))
-        uvicorn.run(app, host="0.0.0.0", port=port)
-    else:
-        # Run direct processing
-        main()
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
