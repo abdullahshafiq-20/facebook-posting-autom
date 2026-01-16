@@ -633,7 +633,8 @@ async def root():
             "/pending": "GET - Get count of pending videos (requires authentication)",
             "/health": "GET - Health check",
             "/auth-test": "GET - Test authentication (requires authentication)"
-        }
+        },
+        "environment_variables": env_status
     }
 
 
