@@ -183,14 +183,16 @@ class FacebookPoster:
             
             prompt = f"""Original caption: {original_caption}
 
-Write a short, engaging Facebook caption based on this. 
-- Make it fresh and human-like (do not copy exactly) 
-- Add 5-10 relevant hashtags at the end 
-- Use emojis naturally 
-- Include this line at the end: (All credits belong to their respective owners.)
-- Keep it concise and attention-grabbing
+Create a short, fresh Facebook caption inspired by the original caption.
+- You MAY slightly vary or rephrase the original caption if needed
+- Understand the context and add light humor or sarcasm when appropriate
+- Use a funny or expressive emoji if it fits (💀 preferred, optional)
+- Keep it concise, natural, and engaging for a Facebook audience
+- Add 5-10 relevant hashtags at the end
+- ALWAYS include this line at the end:
+(All credits belong to their respective owners.)
 
-Only provide the new caption with hashtags, no extra explanation."""
+Return ONLY the new caption with hashtags. No explanations."""
             
             logger.info(f"Sending request to Gemini model: {self.gemini_model}")
             response = self.gemini_client.models.generate_content(
