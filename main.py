@@ -95,6 +95,18 @@ class ProcessResult(BaseModel):
     pending_count: int = 0
 
 
+class AddVideoRequest(BaseModel):
+    instagram_url: str
+
+
+class AddVideoResponse(BaseModel):
+    success: bool
+    message: str
+    row_number: int
+    instagram_url: str
+    status: str
+
+
 class FacebookPoster:
     def __init__(self):
         
@@ -327,6 +339,51 @@ Return ONLY the new caption with hashtags. No explanations."""
                 logger.info(f"[CLEANUP] Removed temporary file: {Path(video_path).name}")
         except Exception as e:
             logger.warning(f"[CLEANUP] Error cleaning up temp files: {str(e)}")
+    
+    def add_video_to_sheet(self, instagram_url):
+        """Add a new video URL to Google Sheet with status='pending'"""
+        try:
+            logger.info(f"Adding video to Google Sheet: {instagram_url}")
+            
+            # Get current headers
+            headers = self.sheet.row_values(1)
+            
+            # Ensure required columns exist
+            required_columns = ['instagram_link', 'status', 'posted_url', 'error_reason', 'processed_date']
+            for col in required_columns:
+                if col not in headers:
+                    self.sheet.update_cell(1, len(headers) + 1, col)
+                    headers.append(col)
+            
+            # Get all current values to find next empty row
+            all_values = self.sheet.get_all_values()
+            next_row = len(all_values) + 1
+            
+            # Get column indices
+            col_instagram_link = headers.index('instagram_link') + 1
+            col_status = headers.index('status') + 1
+            
+            # Add the new row
+            self.sheet.update_cell(next_row, col_instagram_link, instagram_url)
+            self.sheet.update_cell(next_row, col_status, 'pending')
+            
+            logger.info(f"✓ Video added to row {next_row}")
+            
+            return {
+                'success': True,
+                'row_number': next_row,
+                'message': f'Video added successfully at row {next_row}'
+            }
+            
+        except Exception as e:
+            logger.error(f"Error adding video to sheet: {str(e)}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
+            return {
+                'success': False,
+                'row_number': -1,
+                'message': f'Error: {str(e)}'
+            }
     
     def init_google_sheets(self):
         """Initialize Google Sheets connection"""
@@ -615,7 +672,7 @@ def process_next_video():
 
 # FastAPI Endpoints
 @app.get("/")
-async def root():
+def root():
     """API root endpoint"""
     # Check environment variables status
     env_status = {
@@ -742,6 +799,86 @@ def get_pending_count(username: str = Depends(verify_credentials)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get pending count: {str(e)}"
+        )
+
+
+@app.post("/add-video", response_model=AddVideoResponse)
+def add_video(
+    request: AddVideoRequest,
+    username: str = Depends(verify_credentials)
+):
+    """
+    Add a new Instagram reel URL to Google Sheet
+    
+    This endpoint adds the video with status='pending' so it can be
+    processed later by calling the /process endpoint.
+    
+    Requires HTTP Basic Authentication.
+    
+    Request Body:
+    - instagram_url: Full Instagram reel/post URL
+    
+    Returns:
+    - success: True/False
+    - message: Success or error message
+    - row_number: Row number where video was added
+    - instagram_url: The URL that was added
+    - status: Will be 'pending'
+    
+    Example:
+    ```
+    POST /add-video
+    {
+        "instagram_url": "https://www.instagram.com/reel/ABC123/"
+    }
+    ```
+    """
+    try:
+        logger.info(f"Add video requested by user: {username}")
+        
+        # Validate URL format
+        instagram_url = request.instagram_url.strip()
+        
+        if not instagram_url:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Instagram URL cannot be empty"
+            )
+        
+        # Basic validation - check if it's an Instagram URL
+        if 'instagram.com' not in instagram_url:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="URL must be an Instagram link"
+            )
+        
+        # Initialize poster and add to sheet
+        poster = FacebookPoster()
+        result = poster.add_video_to_sheet(instagram_url)
+        
+        if not result['success']:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=result['message']
+            )
+        
+        return AddVideoResponse(
+            success=True,
+            message=result['message'],
+            row_number=result['row_number'],
+            instagram_url=instagram_url,
+            status='pending'
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding video: {str(e)}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to add video: {str(e)}"
         )
 
 

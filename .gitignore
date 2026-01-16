@@ -53,3 +53,4 @@ set_env_simple.py
 setup_env_windows.ps1
 verify_env.py
 temp_downloads/
+test_api.py
